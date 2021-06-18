@@ -1,16 +1,18 @@
 const Jimp = require('jimp');
 const inquirer = require('inquirer');
+const fs = require('fs');
 
 const addTextWatermarkToImage = async function(inputFile, outputFile, text) {
   const image = await Jimp.read(inputFile);
   const font = await Jimp.loadFont(Jimp.FONT_SANS_32_BLACK);
   const textData = {
-    text,
+    text: text,
     alignmentX: Jimp.HORIZONTAL_ALIGN_CENTER,
     alignmentY: Jimp.VERTICAL_ALIGN_MIDDLE,
   };
-    image.print(font, 0, 0, textData, image.getWidth(), image.getHeight());
-    await image.quality(100).writeAsync(outputFile);
+  
+  image.print(font, 0, 0, textData, image.getWidth(), image.getHeight());
+  await image.quality(100).writeAsync(outputFile);
 };
   
 const addImageWatermarkToImage = async function(inputFile, outputFile, watermarkFile) {
@@ -63,9 +65,15 @@ const startApp = async () => {
       message: 'Type your watermark text:',
     }])
     options.watermarkText = text.value;
-    addTextWatermarkToImage('./img/' + options.inputImage, './img/' + prepareOutputFilename(options.inputImage), options.watermarkText);
-  }
-  else {
+
+    if (fs.existsSync(`./img/${options.inputImage}`)) {
+      addTextWatermarkToImage('./img/' + options.inputImage, './img/' + prepareOutputFilename(options.inputImage), options.watermarkText);
+      console.log('Your file with text watermark has been successfully saved!');
+    } else {
+      console.log('Something went wrong... Try again');
+    }
+
+  } else {
     const image = await inquirer.prompt([{
       name: 'filename',
       type: 'input',
@@ -73,7 +81,13 @@ const startApp = async () => {
       default: 'logo.png',
     }])
     options.watermarkImage = image.filename;
-    addImageWatermarkToImage('./img/' + options.inputImage, './img/' + prepareOutputFilename(options.inputImage), './img/' + options.watermarkImage);
+
+    if(fs.existsSync(`./img/${options.inputImage}` && `./img/${image.filename}`)){
+      addImageWatermarkToImage('./img/' + options.inputImage, './img/' + prepareOutputFilename(options.inputImage), './img/' + options.watermarkImage);
+      console.log('Your file with image watermark has been successfully saved!');
+    } else {
+      console.log('Something went wrong... Try again');
+    }
   }
 };
 
